@@ -43,14 +43,15 @@ def main():
 
     # 2. 이미지 파일 경로 입력 받기
     # 테스트용으로 같은 폴더 내의 sample_menu.png를 기본값으로 제안합니다.
-    default_path = "./sample_menu.png"
+    script_dir = Path(__file__).parent
+    default_path = script_dir / "sample_menu.png"
     prompt_text = f"메뉴판 이미지 파일 경로를 입력하세요 (기본값: {default_path}): "
     image_path_input = input(prompt_text).strip()
     
-    image_path = image_path_input if image_path_input else default_path
+    image_path = Path(image_path_input) if image_path_input else default_path
     
     # 절대 경로로 변환
-    image_path = Path(image_path).resolve()
+    image_path = image_path.resolve()
     print(f"-> 대상 이미지: {image_path}")
 
     # 3. 이미지 인코딩

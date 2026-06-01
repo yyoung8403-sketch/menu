@@ -11,9 +11,15 @@ let currentMenu = []; // Stores menu items [{ id, name, price }]
 let selectedQuantities = {}; // Participant selections { menuItemId: quantity }
 let isRoomClosed = false;
 
+// ==========================================
+// 🔑 SUPABASE HARDCODED CONFIGURATION
+// ==========================================
+// TODO: Replace these placeholders with your actual Supabase credentials.
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
+
 // DOM View Elements
 const views = {
-    config: document.getElementById('config-view'),
     create: document.getElementById('create-view'),
     share: document.getElementById('share-view'),
     entry: document.getElementById('entry-view'),
@@ -30,50 +36,31 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // Setup Initial Client and Router
 function initApp() {
-    // 1. Try to extract Supabase credentials from URL hash first (for seamless joining)
-    const hash = window.location.hash;
-    if (hash && hash.includes('surl=') && hash.includes('skey=')) {
-        try {
-            const params = new URLSearchParams(hash.substring(1));
-            const surl = params.get('surl');
-            const skey = params.get('skey');
-            if (surl && skey) {
-                localStorage.setItem('supabase_url', decodeURIComponent(surl));
-                localStorage.setItem('supabase_key', decodeURIComponent(skey));
-                
-                // Clean credentials from hash for cleaner URL, but keep the room id and other flags
-                const roomId = params.get('room');
-                const owner = params.get('owner');
-                const view = params.get('view');
-                let newHash = `room=${roomId}`;
-                if (owner) newHash += `&owner=${owner}`;
-                if (view) newHash += `&view=${view}`;
-                window.location.hash = newHash;
+    // Initialize Supabase Client directly using hardcoded credentials
+    try {
+        let url = SUPABASE_URL;
+        let key = SUPABASE_KEY;
+
+        // Fallback to localStorage if placeholders are not replaced yet
+        if (url === "YOUR_SUPABASE_URL" || key === "YOUR_SUPABASE_ANON_KEY") {
+            const savedUrl = localStorage.getItem('supabase_url');
+            const savedKey = localStorage.getItem('supabase_key');
+            if (savedUrl && savedKey) {
+                url = savedUrl;
+                key = savedKey;
             }
-        } catch (e) {
-            console.error('Failed to parse sharing credentials from hash:', e);
         }
-    }
 
-    const savedUrl = localStorage.getItem('supabase_url');
-    const savedKey = localStorage.getItem('supabase_key');
-
-    if (savedUrl && savedKey) {
-        try {
-            supabaseClient = supabase.createClient(savedUrl, savedKey);
-            routePage();
-        } catch (e) {
-            console.error('Supabase init failed, clearing credentials:', e);
-            localStorage.removeItem('supabase_url');
-            localStorage.removeItem('supabase_key');
-            showView('config');
+        if (url === "YOUR_SUPABASE_URL" || key === "YOUR_SUPABASE_ANON_KEY") {
+            showToast('room.js 상단의 Supabase URL과 Anon Key를 입력해 주세요.', 'warning');
+        } else {
+            supabaseClient = supabase.createClient(url, key);
         }
-    } else {
-        showView('config');
+        routePage();
+    } catch (e) {
+        console.error('Supabase init failed:', e);
+        showToast('Supabase 연결 초기화 실패: ' + e.message, 'danger');
     }
-
-    // Config save listener
-    document.getElementById('save-config-btn').addEventListener('click', saveConfig);
 
     // Create room listener
     document.getElementById('create-room-btn').addEventListener('click', createRoom);
@@ -99,11 +86,8 @@ function initApp() {
     });
 
     document.getElementById('copy-share-url-btn').addEventListener('click', () => {
-        const savedUrl = localStorage.getItem('supabase_url');
-        const savedKey = localStorage.getItem('supabase_key');
-        const surlParam = encodeURIComponent(savedUrl);
-        const skeyParam = encodeURIComponent(savedKey);
-        const shareLink = `${window.location.origin}${window.location.pathname}#room=${currentRoomId}&surl=${surlParam}&skey=${skeyParam}`;
+        const baseUrl = window.location.href.split('#')[0];
+        const shareLink = `${baseUrl}#room=${currentRoomId}`;
         navigator.clipboard.writeText(shareLink).then(() => {
             showToast('참가자 링크가 복사되었습니다.', 'success');
         });
@@ -127,48 +111,6 @@ function initApp() {
     document.getElementById('toggle-ladder-btn').addEventListener('click', toggleLadderGame);
     document.getElementById('draw-ladder-btn').addEventListener('click', drawLadderGame);
     document.getElementById('run-ladder-btn').addEventListener('click', runLadderGame);
-
-    // DB Connection Reset Listener
-    document.getElementById('reset-db-btn').addEventListener('click', resetDBConfig);
-}
-
-// Clear saved Supabase credentials and return to setup
-function resetDBConfig() {
-    if (confirm('Supabase DB 연결 설정을 초기화하고 처음 설정 화면으로 돌아가시겠습니까?')) {
-        localStorage.removeItem('supabase_url');
-        localStorage.removeItem('supabase_key');
-        supabaseClient = null;
-        currentRoomId = null;
-        window.location.hash = ''; // Reset route/room state
-
-        // Clear config input fields
-        document.getElementById('supabase-url').value = '';
-        document.getElementById('supabase-key').value = '';
-
-        showView('config');
-        showToast('DB 연결 설정이 초기화되었습니다.', 'warning');
-    }
-}
-
-// Save Supabase configs in LocalStorage
-function saveConfig() {
-    const urlInput = document.getElementById('supabase-url').value.strip ? document.getElementById('supabase-url').value.strip() : document.getElementById('supabase-url').value.trim();
-    const keyInput = document.getElementById('supabase-key').value.strip ? document.getElementById('supabase-key').value.strip() : document.getElementById('supabase-key').value.trim();
-
-    if (!urlInput || !keyInput) {
-        showToast('Supabase URL과 Anon Key를 모두 입력해 주세요.', 'warning');
-        return;
-    }
-
-    try {
-        supabaseClient = supabase.createClient(urlInput, keyInput);
-        localStorage.setItem('supabase_url', urlInput);
-        localStorage.setItem('supabase_key', keyInput);
-        showToast('Supabase 연결 설정이 저장되었습니다.', 'success');
-        routePage();
-    } catch (e) {
-        showToast('연결 정보를 확인해 주세요: ' + e.message, 'danger');
-    }
 }
 
 // Core SPA Hash Router
@@ -182,7 +124,7 @@ async function routePage() {
     }
 
     if (!supabaseClient) {
-        showView('config');
+        showToast('Supabase 클라이언트가 초기화되지 않았습니다. room.js 상단의 설정을 확인해 주세요.', 'danger');
         return;
     }
 
@@ -227,8 +169,10 @@ async function routePage() {
             if (userName) {
                 // Already typed in name, proceed to menu selection
                 document.getElementById('display-user-name').textContent = userName;
-                await loadParticipantMenu(roomId);
-                showView('menuSelect');
+                const success = await loadParticipantMenu(roomId);
+                if (success) {
+                    showView('menuSelect');
+                }
             } else {
                 // Must enter name first
                 showView('entry');
@@ -314,15 +258,11 @@ async function createRoom() {
 
         if (menuError) throw menuError;
 
-        // 3. Display Share Link with credentials embedded for seamless entry
-        const savedUrl = localStorage.getItem('supabase_url');
-        const savedKey = localStorage.getItem('supabase_key');
-        const surlParam = encodeURIComponent(savedUrl);
-        const skeyParam = encodeURIComponent(savedKey);
-        
-        const shareLink = `${window.location.origin}${window.location.pathname}#room=${room.id}&surl=${surlParam}&skey=${skeyParam}`;
+        // 3. Display Share Link (no credentials needed in URL since they are hardcoded)
+        const baseUrl = window.location.href.split('#')[0];
+        const shareLink = `${baseUrl}#room=${room.id}`;
         document.getElementById('share-link-input').value = shareLink;
-        document.getElementById('go-dashboard-btn').href = `${window.location.origin}${window.location.pathname}#room=${room.id}&owner=true`;
+        document.getElementById('go-dashboard-btn').href = `${baseUrl}#room=${room.id}&owner=true`;
 
         showToast('주문 방이 성공적으로 생성되었습니다!', 'success');
         showView('share');
@@ -345,9 +285,11 @@ function joinRoom() {
     sessionStorage.setItem(`room_${currentRoomId}_user`, name);
     document.getElementById('display-user-name').textContent = name;
     
-    loadParticipantMenu(currentRoomId).then(() => {
-        showView('menuSelect');
-        showToast(`${name}님, 주문방에 오신 것을 환영합니다!`);
+    loadParticipantMenu(currentRoomId).then((success) => {
+        if (success) {
+            showView('menuSelect');
+            showToast(`${name}님, 주문방에 오신 것을 환영합니다!`);
+        }
     });
 }
 
@@ -402,8 +344,10 @@ async function loadParticipantMenu(roomId) {
         }
 
         renderParticipantMenuGrid();
+        return true;
     } catch (e) {
         showToast('메뉴를 로딩하는 중 오류가 발생했습니다: ' + e.message, 'danger');
+        return false;
     }
 }
 
@@ -419,7 +363,7 @@ function renderParticipantMenuGrid() {
         card.innerHTML = `
             <div>
                 <h5 class="text-sm font-semibold text-slate-800">${escapeHtml(item.name)}</h5>
-                <span class="text-xs text-pink-650 text-pink-650 font-bold text-pink-600">${item.price.toLocaleString()}원</span>
+                <span class="text-xs font-bold text-pink-600">${item.price.toLocaleString()}원</span>
             </div>
             
             <div class="flex items-center gap-3">
@@ -537,16 +481,13 @@ async function loadAndRenderDashboard(roomId) {
         // Toggle visibility of Owner vs Participant views
         const closeBtn = document.getElementById('close-room-btn');
         const goBackBtn = document.getElementById('go-back-to-menu-btn');
-        const resetDbBtn = document.getElementById('reset-db-btn');
 
         if (isOwner) {
             closeBtn.style.display = 'block';
             goBackBtn.style.display = 'none';
-            if (resetDbBtn) resetDbBtn.style.display = 'flex';
         } else {
             closeBtn.style.display = 'none';
             goBackBtn.style.display = 'flex';
-            if (resetDbBtn) resetDbBtn.style.display = 'none';
         }
 
         // 1. Load Room Details
@@ -657,7 +598,7 @@ async function loadAndRenderDashboard(roomId) {
                 row.className = 'border-b border-slate-100';
                 row.innerHTML = `
                     <td class="py-3 font-semibold text-slate-800">${escapeHtml(item.name)}</td>
-                    <td class="py-3 text-center font-extrabold text-violet-750 text-violet-750 text-violet-700">${item.qty}개</td>
+                    <td class="py-3 text-center font-extrabold text-violet-700">${item.qty}개</td>
                     <td class="py-3 text-right font-bold text-pink-600">${item.total.toLocaleString()}원</td>
                 `;
                 tableBody.appendChild(row);
@@ -966,18 +907,17 @@ function computeLadderPaths(players, rungs) {
         
         for (let r = 0; r < rungs.length; r++) {
             const rung = rungs[r];
-            if (rung.y > currY) {
-                // Move down
+            if (rung.y >= currY && (rung.fromCol === currCol || rung.toCol === currCol)) {
+                // Move down to the rung level
                 path.push({ x: xCoords[currCol], y: rung.y });
                 
                 // Cross horizontally
                 if (rung.fromCol === currCol) {
                     currCol = rung.toCol;
-                    path.push({ x: xCoords[currCol], y: rung.y });
-                } else if (rung.toCol === currCol) {
+                } else {
                     currCol = rung.fromCol;
-                    path.push({ x: xCoords[currCol], y: rung.y });
                 }
+                path.push({ x: xCoords[currCol], y: rung.y });
                 currY = rung.y;
             }
         }

@@ -17,8 +17,8 @@ class MenuParser {
             // 4. Dollar prices: e.g., $12.00, $5.99, $15
             /\$\s*\d+(?:\.\d{2})?\b/,
             // 5. Standard integer prices that look like Korean Won (e.g., 12000, 7500, 150000)
-            // Typically 4 to 6 digits, or 3 digits if it's high enough or in context (we check 3000 to 999000)
-            /\b[3-9]\d{2,5}\b/
+            // Typically 4 to 6 digits, or 3 digits if it's high enough or in context (we check 1000 to 999999 and 300 to 999)
+            /\b(?:[1-9]\d{3,5}|[3-9]\d{2})\b/
         ];
     }
 

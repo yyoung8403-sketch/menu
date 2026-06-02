@@ -106,6 +106,7 @@ function processUploadedFile(file) {
             preprocessImage();
             editorSection.style.display = 'flex';
             ocrBtn.disabled = false;
+            document.body.setAttribute('data-step', 'edit');
             
             // Scroll smoothly to editor
             editorSection.scrollIntoView({ behavior: 'smooth' });
@@ -263,6 +264,7 @@ async function runOCR() {
     if (!originalImage) return;
 
     ocrBtn.disabled = true;
+    document.body.setAttribute('data-step', 'analyzing');
 
     updateProgress(20, 'Vision AI 분석 요청 중...', 'Gemini 인공지능 서버에 메뉴 분석을 요청하고 있습니다.');
 
@@ -346,6 +348,7 @@ async function runOCR() {
             renderMenuTable();
             
             resultsCard.classList.add('active');
+            document.body.setAttribute('data-step', 'done');
             resultsCard.scrollIntoView({ behavior: 'smooth' });
 
             if (parsedMenuItems.length > 0) {
@@ -359,6 +362,7 @@ async function runOCR() {
         console.error('Gemini Vision AI Error: ', e);
         updateProgress(0, '오류 발생', e.message);
         ocrBtn.disabled = false;
+        document.body.setAttribute('data-step', 'edit');
         showToast('Vision AI 분석 실패: ' + e.message, 'danger');
     }
 }

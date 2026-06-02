@@ -52,10 +52,34 @@ body {
 }
 
 /* Header */
-header {
-    text-align: center;
-    margin-bottom: 1rem;
+.cute-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
     position: relative;
+    text-align: center;
+}
+
+.pokemon-container {
+    margin-bottom: 1rem;
+    animation: floatCute 4s ease-in-out infinite;
+}
+
+.pokemon-img {
+    max-width: 280px;
+    height: auto;
+    border-radius: 24px;
+    border: 4px solid #fef08a; /* Cute Pikachu Yellow */
+    box-shadow: 0 12px 28px rgba(250, 204, 21, 0.25);
+    background: white;
+    padding: 6px;
+    transition: transform var(--transition-speed);
+}
+
+.pokemon-img:hover {
+    transform: scale(1.05) rotate(-2deg);
 }
 
 header h1 {
@@ -70,12 +94,6 @@ header h1 {
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.02));
 }
 
-header p {
-    color: var(--text-muted);
-    font-size: 1.1rem;
-    font-weight: 400;
-}
-
 .badge {
     display: inline-block;
     padding: 0.3rem 0.8rem;
@@ -88,6 +106,24 @@ header p {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 0.75rem;
+}
+
+.cute-badge {
+    background: #fef08a !important;
+    border: 1.5px solid #facc15 !important;
+    color: #854d0e !important;
+    font-size: 0.8rem;
+    box-shadow: 0 4px 8px rgba(250, 204, 21, 0.15);
+    text-transform: none;
+}
+
+@keyframes floatCute {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-10px) rotate(1.5deg);
+    }
 }
 
 /* Glassmorphism Card Style - Light Mode */

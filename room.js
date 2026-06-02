@@ -14,9 +14,8 @@ let isRoomClosed = false;
 // ==========================================
 // 🔑 SUPABASE HARDCODED CONFIGURATION
 // ==========================================
-// TODO: Replace these placeholders with your actual Supabase credentials.
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://apltvydxlsbgsauqfext.supabase.co";
+const SUPABASE_KEY = "sb_publishable_AZLxRS8NANTo-KA6pPfoag_Hb_DlCxy";
 
 // DOM View Elements
 const views = {

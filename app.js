@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initFilterEvents();
     initTableEvents();
     initExportEvents();
+    initModeEvents();
 });
 
 // Setup File Upload & Drag and Drop Events
@@ -744,4 +745,44 @@ function showToast(message, type = 'primary') {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 400);
     }, 3000);
+}
+
+// Setup Tab Switcher for Image OCR vs Direct Input
+function initModeEvents() {
+    const tabOcr = document.getElementById('tab-ocr');
+    const tabDirect = document.getElementById('tab-direct');
+
+    if (!tabOcr || !tabDirect) return;
+
+    tabOcr.addEventListener('click', () => {
+        tabOcr.classList.add('active');
+        tabDirect.classList.remove('active');
+
+        // Determine step based on upload status
+        if (parsedMenuItems.length > 0) {
+            document.body.setAttribute('data-step', 'done');
+            resultsCard.classList.add('active');
+        } else if (originalImage) {
+            document.body.setAttribute('data-step', 'edit');
+            resultsCard.classList.remove('active');
+        } else {
+            document.body.setAttribute('data-step', 'upload');
+            resultsCard.classList.remove('active');
+        }
+        showToast('이미지 분석 모드로 변경되었습니다.');
+    });
+
+    tabDirect.addEventListener('click', () => {
+        tabDirect.classList.add('active');
+        tabOcr.classList.remove('active');
+
+        document.body.setAttribute('data-step', 'direct');
+        resultsCard.classList.add('active');
+
+        // Auto-add an empty row if no items exist to guide the user
+        if (parsedMenuItems.length === 0) {
+            addRowBtn.click();
+        }
+        showToast('직접 입력 모드로 변경되었습니다.');
+    });
 }

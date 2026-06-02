@@ -922,7 +922,7 @@ tr:hover td {
 .pokemon-guide-container {
     display: none;
     position: absolute;
-    z-index: 100;
+    z-index: 999;
     pointer-events: none; /* Allow pointer events to pass through container borders */
 }
 
@@ -948,7 +948,7 @@ body[data-step="done"] .poke-results-guide-right {
     position: relative; /* Position relative to its guide container */
     width: 100%;
     height: auto;
-    z-index: 10;
+    z-index: 1000;
     pointer-events: auto; /* Allow hovering & clicking! */
     cursor: pointer;
     user-select: none;
@@ -961,44 +961,44 @@ body[data-step="done"] .poke-results-guide-right {
     transform: scale(1.15) !important;
 }
 
-/* Specific positions for guide containers (absolute anchors) */
+/* Specific positions for guide containers (absolute anchors outside cards) */
 .poke-upload-guide {
-    top: -95px; /* Offset higher to accommodate speech bubble above character */
-    right: 20px;
-    width: 90px;
-    height: 90px;
+    top: 30px;
+    left: -75px;
+    width: 85px;
+    height: 85px;
     animation: bounceGentle 3s ease-in-out infinite;
 }
 
 .poke-editor-guide {
-    top: -90px; /* Offset higher to accommodate speech bubble above character */
-    right: 30px;
-    width: 85px;
-    height: 85px;
+    top: 40px;
+    left: -70px;
+    width: 80px;
+    height: 80px;
     animation: bounceGentle 3.5s ease-in-out infinite;
 }
 
 .poke-progress-guide {
-    top: -85px; /* Offset higher to accommodate speech bubble above character */
-    right: 20px;
-    width: 80px;
-    height: 80px;
+    top: 20px;
+    left: -70px;
+    width: 75px;
+    height: 75px;
     animation: floatGentle 4s ease-in-out infinite;
 }
 
 .poke-results-guide-left {
-    top: -90px; /* Offset higher to accommodate speech bubble above character */
-    left: 40px;
-    width: 85px;
-    height: 85px;
+    top: 60px;
+    left: -75px;
+    width: 80px;
+    height: 80px;
     animation: bobGentle 4s ease-in-out infinite;
 }
 
 .poke-results-guide-right {
-    bottom: -15px;
-    right: 30px;
-    width: 85px;
-    height: 85px;
+    bottom: 100px;
+    right: -75px;
+    width: 80px;
+    height: 80px;
     animation: floatGentle2 5s ease-in-out infinite;
 }
 
@@ -1013,7 +1013,7 @@ body[data-step="done"] .poke-results-guide-right {
     font-weight: 800;
     color: #1e293b;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    z-index: 110;
+    z-index: 1001;
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%) translateY(-15px); /* Increased offset to 15px so bubble doesn't touch the head */
@@ -1024,6 +1024,68 @@ body[data-step="done"] .poke-results-guide-right {
     width: max-content;
     text-align: center;
     line-height: 1.4;
+}
+
+/* Custom Speech Bubble Layout for Left-Peeking Guides (Pikachu, Eevee, Jigglypuff, Charmander) */
+.poke-upload-guide .poke-guide-bubble,
+.poke-editor-guide .poke-guide-bubble,
+.poke-progress-guide .poke-guide-bubble,
+.poke-results-guide-left .poke-guide-bubble {
+    left: 40px;
+    transform: translateY(-15px);
+    animation: bubbleFloatSimple 3s ease-in-out infinite;
+}
+
+.poke-upload-guide .poke-guide-bubble::after,
+.poke-editor-guide .poke-guide-bubble::after,
+.poke-progress-guide .poke-guide-bubble::after,
+.poke-results-guide-left .poke-guide-bubble::after {
+    left: 25px;
+    transform: none;
+}
+
+.poke-upload-guide .poke-guide-bubble::before,
+.poke-editor-guide .poke-guide-bubble::before,
+.poke-progress-guide .poke-guide-bubble::before,
+.poke-results-guide-left .poke-guide-bubble::before {
+    left: 25px;
+    transform: none;
+}
+
+/* Custom Speech Bubble Layout for Right-Peeking Guide (Squirtle) */
+.poke-results-guide-right .poke-guide-bubble {
+    left: auto;
+    right: 40px;
+    transform: translateY(-15px);
+    animation: bubbleFloatSimple 3s ease-in-out infinite;
+}
+
+.poke-results-guide-right .poke-guide-bubble::after {
+    left: auto;
+    right: 25px;
+    transform: none;
+}
+
+.poke-results-guide-right .poke-guide-bubble::before {
+    left: auto;
+    right: 25px;
+    transform: none;
+}
+
+@keyframes bubbleFloatSimple {
+    0%, 100% { transform: translateY(-15px); }
+    50% { transform: translateY(-21px); }
+}
+
+/* Hide peeking guides on screens narrower than 1200px to prevent off-screen cropping or menu overlap */
+@media (max-width: 1200px) {
+    .poke-upload-guide,
+    .poke-editor-guide,
+    .poke-progress-guide,
+    .poke-results-guide-left,
+    .poke-results-guide-right {
+        display: none !important;
+    }
 }
 
 .poke-guide-bubble::after {
@@ -1161,5 +1223,75 @@ body[data-step="done"] .poke-results-guide-right {
     .pokemon-guide-container {
         display: none !important;
     }
+}
+
+/* Mode Switcher Tabs */
+.mode-tab-container {
+    display: flex;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1.5px solid rgba(139, 92, 246, 0.15);
+    border-radius: 50px;
+    padding: 6px;
+    max-width: 580px;
+    margin: 0 auto 1.5rem auto;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.05);
+    z-index: 10;
+    position: relative;
+}
+
+.mode-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: transparent;
+    border-radius: 50px;
+    font-family: var(--font-title);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mode-tab:hover {
+    color: var(--primary);
+}
+
+.mode-tab.active {
+    background: linear-gradient(135deg, var(--primary) 0%, #6d28d9 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+}
+
+.tab-icon {
+    transition: transform 0.3s;
+}
+
+.mode-tab.active .tab-icon {
+    transform: scale(1.1);
+}
+
+/* Snorlax custom bubble */
+.bubble-snorlax {
+    border-color: #0f766e;
+    color: #115e59;
+    box-shadow: 0 6px 15px rgba(15, 118, 110, 0.15);
+}
+
+/* Step-based visibility of panels */
+body[data-step="direct"] #upload-card,
+body[data-step="direct"] #editor-section,
+body[data-step="direct"] #progress-card {
+    display: none !important;
+}
+
+body:not([data-step="direct"]) #direct-welcome-card {
+    display: none !important;
 }
 

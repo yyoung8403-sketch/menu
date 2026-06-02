@@ -20,10 +20,33 @@
             <h1>오늘의 점심메뉴!!</h1>
         </header>
 
+        <!-- Mode Switcher Tab -->
+        <div class="mode-tab-container">
+            <button class="mode-tab active" id="tab-ocr">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tab-icon"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                이미지 분석 추출 모드
+            </button>
+            <button class="mode-tab" id="tab-direct">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tab-icon"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                직접 쓰기 모드
+            </button>
+        </div>
+
         <!-- Main Dashboard -->
         <main class="dashboard">
             <!-- Left Column: Upload & Canvas Image Editor -->
             <section class="left-panel">
+                <!-- Direct Input Welcome Card -->
+                <div class="glass-card" id="direct-welcome-card" style="position: relative; text-align: center; padding: 3rem 2rem;">
+                    <!-- Snorlax Direct Guide -->
+                    <div class="pokemon-guide-container poke-direct-guide" style="display: block; position: relative; margin: 0 auto 1.5rem auto; width: 140px; height: 140px; animation: floatGentle 5s ease-in-out infinite;">
+                        <div class="poke-guide-bubble bubble-snorlax" style="display: block; width: 220px;">오른쪽 표에 원하는 메뉴 이름과 가격을 직접 적어봐! 내가 예쁘게 합산해 줄게! ✨</div>
+                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/143.png" alt="Snorlax" class="pokemon-decorator">
+                    </div>
+                    <h2 class="upload-text" style="margin-top: 1rem;">직접 입력 모드</h2>
+                    <p class="upload-subtext">이미지 파일 없이 텍스트로 이름과 가격을 직접 기재할 수 있는 모드입니다.</p>
+                    <p class="upload-subtext" style="font-size: 0.8rem; margin-top: 1.25rem; opacity: 0.85; color: var(--primary); font-weight: 600;">👉 오른쪽의 '+ 메뉴 추가' 버튼을 눌러보세요!</p>
+                </div>
                 <!-- Upload Area -->
                 <div class="glass-card" id="upload-card" style="position: relative;">
                     <!-- Pikachu Upload Guide -->
@@ -266,7 +289,8 @@
                 charmander: "파이~ 파이! 🔥",
                 squirtle: "꼬부~ 꼬북! 💧",
                 eevee: "이~ 브이! ✨",
-                jigglypuff: "푸~ 푸린🎵"
+                jigglypuff: "푸~ 푸린🎵",
+                snorlax: "꾸어어... 💤"
             };
 
             const cryText = cries[pokemon] || "야옹~";

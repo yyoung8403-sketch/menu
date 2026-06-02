@@ -42,6 +42,13 @@ const contrastVal = document.getElementById('contrast-val');
 const thresholdVal = document.getElementById('threshold-val');
 const thresholdGroup = document.getElementById('threshold-group');
 
+// OCR Engine UI controls
+const engineCtrl = document.getElementById('engine-ctrl');
+const geminiKeyGroup = document.getElementById('gemini-key-group');
+const geminiKeyInput = document.getElementById('gemini-key');
+const langGroup = document.getElementById('lang-group');
+const langCtrl = document.getElementById('lang-ctrl');
+
 // Initialize Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
     initUploadEvents();
@@ -187,6 +194,25 @@ function initFilterEvents() {
         setupCanvasSize();
         preprocessImage();
         showToast('필터 설정이 초기화되었습니다.');
+    });
+
+    // Prefill Gemini Key from localStorage
+    const savedGeminiKey = localStorage.getItem('gemini_api_key');
+    if (savedGeminiKey && geminiKeyInput) {
+        geminiKeyInput.value = savedGeminiKey;
+    } else if (geminiKeyInput) {
+        geminiKeyInput.value = GEMINI_API_KEY;
+    }
+
+    // Engine Selection Change Listener
+    engineCtrl.addEventListener('change', () => {
+        if (engineCtrl.value === 'gemini') {
+            geminiKeyGroup.style.display = 'block';
+            langGroup.style.display = 'none';
+        } else {
+            geminiKeyGroup.style.display = 'none';
+            langGroup.style.display = 'block';
+        }
     });
 
     // Run OCR button click

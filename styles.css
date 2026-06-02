@@ -136,6 +136,7 @@ header h1 {
     box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 12px -5px rgba(0, 0, 0, 0.03);
     padding: 1.75rem;
     transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+    position: relative;
 }
 
 .glass-card:hover {
@@ -916,3 +917,249 @@ tr:hover td {
         align-items: center;
     }
 }
+
+/* Step-based visibility of guides */
+.pokemon-guide-container {
+    display: none;
+    position: absolute;
+    z-index: 100;
+    pointer-events: none; /* Allow pointer events to pass through container borders */
+}
+
+body[data-step="upload"] .poke-upload-guide {
+    display: block;
+}
+
+body[data-step="edit"] .poke-editor-guide {
+    display: block;
+}
+
+body[data-step="analyzing"] .poke-progress-guide {
+    display: block;
+}
+
+body[data-step="done"] .poke-results-guide-left,
+body[data-step="done"] .poke-results-guide-right {
+    display: block;
+}
+
+/* Decorative Pokemon Styles */
+.pokemon-decorator {
+    position: relative; /* Position relative to its guide container */
+    width: 100%;
+    height: auto;
+    z-index: 10;
+    pointer-events: auto; /* Allow hovering & clicking! */
+    cursor: pointer;
+    user-select: none;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.1));
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: block;
+}
+
+.pokemon-decorator:hover {
+    transform: scale(1.15) !important;
+}
+
+/* Specific positions for guide containers (absolute anchors) */
+.poke-upload-guide {
+    top: -95px; /* Offset higher to accommodate speech bubble above character */
+    right: 20px;
+    width: 90px;
+    height: 90px;
+    animation: bounceGentle 3s ease-in-out infinite;
+}
+
+.poke-editor-guide {
+    top: -90px; /* Offset higher to accommodate speech bubble above character */
+    right: 30px;
+    width: 85px;
+    height: 85px;
+    animation: bounceGentle 3.5s ease-in-out infinite;
+}
+
+.poke-progress-guide {
+    top: -85px; /* Offset higher to accommodate speech bubble above character */
+    right: 20px;
+    width: 80px;
+    height: 80px;
+    animation: floatGentle 4s ease-in-out infinite;
+}
+
+.poke-results-guide-left {
+    top: -90px; /* Offset higher to accommodate speech bubble above character */
+    left: 40px;
+    width: 85px;
+    height: 85px;
+    animation: bobGentle 4s ease-in-out infinite;
+}
+
+.poke-results-guide-right {
+    bottom: -15px;
+    right: 30px;
+    width: 85px;
+    height: 85px;
+    animation: floatGentle2 5s ease-in-out infinite;
+}
+
+/* Guide speech bubble */
+.poke-guide-bubble {
+    position: absolute;
+    background: #ffffff;
+    border: 2.5px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #1e293b;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    z-index: 110;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-15px); /* Increased offset to 15px so bubble doesn't touch the head */
+    animation: bubbleFloat 3s ease-in-out infinite;
+    pointer-events: none;
+    max-width: 240px;
+    white-space: normal;
+    width: max-content;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.poke-guide-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 8px 0;
+    border-style: solid;
+    border-color: #ffffff transparent;
+    display: block;
+    width: 0;
+}
+
+.poke-guide-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 11px 11px 0;
+    border-style: solid;
+    border-color: inherit transparent;
+    display: block;
+    width: 0;
+    z-index: -1;
+}
+
+/* Colors for specific bubbles */
+.bubble-pikachu {
+    border-color: #facc15; /* Yellow */
+    color: #854d0e;
+}
+.bubble-eevee {
+    border-color: #f59e0b; /* Amber */
+    color: #78350f;
+}
+.bubble-jigglypuff {
+    border-color: #fbcfe8; /* Pink */
+    color: #9d174d;
+}
+.bubble-charmander {
+    border-color: #fb923c; /* Orange */
+    color: #9a3412;
+}
+.bubble-squirtle {
+    border-color: #60a5fa; /* Blue */
+    color: #1e40af;
+}
+
+/* Speech Bubble for Pokémon Cries on Click */
+.poke-bubble {
+    position: absolute;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1e293b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    pointer-events: none;
+    z-index: 1000;
+    white-space: nowrap;
+    animation: bubblePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.poke-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 8px 0;
+    border-style: solid;
+    border-color: white transparent;
+    display: block;
+    width: 0;
+}
+
+.poke-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 10px 10px 0;
+    border-style: solid;
+    border-color: #e2e8f0 transparent;
+    display: block;
+    width: 0;
+    z-index: -1;
+}
+
+/* Animations */
+@keyframes bounceGentle {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(3deg); }
+}
+
+@keyframes bobGentle {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-6px) rotate(-3deg); }
+}
+
+@keyframes floatGentle {
+    0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+    50% { transform: translateY(-12px) translateX(4px) rotate(2deg); }
+}
+
+@keyframes floatGentle2 {
+    0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+    50% { transform: translateY(-10px) translateX(-4px) rotate(-2deg); }
+}
+
+@keyframes bubbleFloat {
+    0%, 100% { transform: translate(-50%, -15px); }
+    50% { transform: translate(-50%, -21px); }
+}
+
+@keyframes bubblePop {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 10px) scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+/* Hide guides on small mobile devices to avoid overlap */
+@media (max-width: 768px) {
+    .pokemon-guide-container {
+        display: none !important;
+    }
+}
+

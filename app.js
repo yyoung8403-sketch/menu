@@ -1,8 +1,11 @@
 /**
  * app.js
  * Manages the UI events, canvas image processing,
- * Tesseract.js integration, bounding box overlay, and table interactions.
+ * Gemini API integration, and table interactions.
  */
+
+// API Configuration
+const GEMINI_API_KEY = "AQ.Ab8RN6LzkNoxLmJ0LxK4o8sPmT93UXB4KDcF7iRU17sos9OFlA";
 
 // Global State
 let originalImage = null;
@@ -38,12 +41,6 @@ const brightnessVal = document.getElementById('brightness-val');
 const contrastVal = document.getElementById('contrast-val');
 const thresholdVal = document.getElementById('threshold-val');
 const thresholdGroup = document.getElementById('threshold-group');
-
-// OCR Engine Selector controls
-const engineCtrl = document.getElementById('engine-ctrl');
-const geminiKeyGroup = document.getElementById('gemini-key-group');
-const geminiKeyInput = document.getElementById('gemini-key');
-const langGroup = document.getElementById('lang-group');
 
 // Initialize Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
@@ -191,23 +188,6 @@ function initFilterEvents() {
         showToast('필터 설정이 초기화되었습니다.');
     });
 
-    // Prefill Gemini Key from localStorage
-    const savedGeminiKey = localStorage.getItem('gemini_api_key');
-    if (savedGeminiKey && geminiKeyInput) {
-        geminiKeyInput.value = savedGeminiKey;
-    }
-
-    // Engine Selection Change Listener
-    engineCtrl.addEventListener('change', () => {
-        if (engineCtrl.value === 'gemini') {
-            geminiKeyGroup.style.display = 'block';
-            langGroup.style.display = 'none';
-        } else {
-            geminiKeyGroup.style.display = 'none';
-            langGroup.style.display = 'block';
-        }
-    });
-
     // Run OCR button click
     ocrBtn.addEventListener('click', runOCR);
 }
@@ -278,46 +258,33 @@ function updateProgress(percent, statusText, detailText = '') {
     progressDetails.textContent = detailText;
 }
 
-// Run Tesseract.js OCR engine
-// Run Tesseract.js or Gemini Vision AI engine
+// Run Gemini Vision AI engine
 async function runOCR() {
     if (!originalImage) return;
 
-    const engine = engineCtrl.value;
     ocrBtn.disabled = true;
 
-    if (engine === 'gemini') {
-        const apiKey = geminiKeyInput.value.trim();
-        if (!apiKey) {
-            showToast('Gemini API Key를 입력해 주세요.', 'warning');
-            ocrBtn.disabled = false;
-            return;
-        }
+    updateProgress(20, 'Vision AI 분석 요청 중...', 'Gemini 인공지능 서버에 메뉴 분석을 요청하고 있습니다.');
 
-        // Save key to local storage for convenience
-        localStorage.setItem('gemini_api_key', apiKey);
+    try {
+        // Get base64 data from previewCanvas
+        const dataUrl = previewCanvas.toDataURL('image/jpeg', 0.85);
+        const base64Data = dataUrl.split(',')[1]; // Remove prefix "data:image/jpeg;base64,"
 
-        updateProgress(20, 'Vision AI 분석 요청 중...', 'Gemini 인공지능 서버에 메뉴 분석을 요청하고 있습니다.');
+        // Define Gemini generate content endpoint using gemini-2.5-flash
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-        try {
-            // Get base64 data from previewCanvas
-            const dataUrl = previewCanvas.toDataURL('image/jpeg', 0.85);
-            const base64Data = dataUrl.split(',')[1]; // Remove prefix "data:image/jpeg;base64,"
-
-            // Define Gemini generate content endpoint
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            parts: [
-                                {
-                                    text: `제공된 이미지에서 모든 메뉴 이름과 해당 가격을 추출하라.
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: `제공된 이미지에서 모든 메뉴 이름과 해당 가격을 추출하라.
 
 규칙:
 1. 가격은 '원', ',', '.', '천원' 등의 단위나 텍스트 기호를 모두 제거하고 오직 순수한 숫자(Integer) 형태로만 정제하라. (예: '7,050원' -> 7050, '7.0' -> 7000)
@@ -330,155 +297,70 @@ async function runOCR() {
     { "menu_name": "메뉴이름2", "price": 8000 }
   ]
 }`
-                                },
-                                {
-                                    inlineData: {
-                                        mimeType: 'image/jpeg',
-                                        data: base64Data
-                                    }
+                            },
+                            {
+                                inlineData: {
+                                    mimeType: 'image/jpeg',
+                                    data: base64Data
                                 }
-                            ]
-                        }
-                    ],
-                    generationConfig: {
-                        responseMimeType: 'application/json'
+                            }
+                        ]
                     }
-                })
-            });
-
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error ? errData.error.message : 'API 호출에 실패했습니다.');
-            }
-
-            updateProgress(80, '데이터 파싱 중...', '분석 결과를 정리하고 있습니다.');
-
-            const resJson = await response.json();
-            const textResponse = resJson.candidates[0].content.parts[0].text;
-            const parsedRes = JSON.parse(textResponse);
-            const rawItems = parsedRes.menu_items || parsedRes;
-
-            // Map to parsedMenuItems structure
-            parsedMenuItems = (Array.isArray(rawItems) ? rawItems : []).map(item => ({
-                name: item.menu_name || item.name || '이름 없음',
-                price: item.price ? `${item.price.toLocaleString()}원` : '-',
-                rawPrice: parseInt(item.price, 10) || 0,
-                confidence: 100,
-                bbox: null // Bounding boxes are not available for Gemini API
-            }));
-
-            // Clear overlay canvas
-            const oCtx = overlayCanvas.getContext('2d');
-            oCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-
-            updateProgress(100, '분석 완료!', '메뉴 정보를 성공적으로 불러왔습니다.');
-
-            setTimeout(() => {
-                progressCard.style.display = 'none';
-                ocrBtn.disabled = false;
-                renderMenuTable();
-                
-                resultsCard.classList.add('active');
-                resultsCard.scrollIntoView({ behavior: 'smooth' });
-
-                if (parsedMenuItems.length > 0) {
-                    showToast(`Vision AI가 총 ${parsedMenuItems.length}개의 메뉴를 완벽하게 추출했습니다.`, 'success');
-                } else {
-                    showToast('메뉴 데이터를 식별하지 못했습니다.', 'warning');
+                ],
+                generationConfig: {
+                    responseMimeType: 'application/json'
                 }
-            }, 800);
+            })
+        });
 
-        } catch (e) {
-            console.error('Gemini Vision AI Error: ', e);
-            updateProgress(0, '오류 발생', e.message);
-            ocrBtn.disabled = false;
-            showToast('Vision AI 분석 실패: ' + e.message, 'danger');
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error ? errData.error.message : 'API 호출에 실패했습니다.');
         }
 
-    } else {
-        // Tesseract.js (Local Engine) Flow
-        updateProgress(0, 'Vision AI 준비 중...', 'OCR 라이브러리를 준비하고 있습니다.');
-        try {
-            // Read selected language from dropdown
-            const selectedLang = document.getElementById('lang-ctrl').value;
-            const langMessage = selectedLang === 'kor' ? '한국어 인공지능 모델 불러오는 중...' : (selectedLang === 'eng' ? '영어 인공지능 모델 불러오는 중...' : '한국어/영어 인공지능 모델 불러오는 중...');
+        updateProgress(80, '데이터 파싱 중...', '분석 결과를 정리하고 있습니다.');
 
-            const result = await Tesseract.recognize(
-                previewCanvas,
-                selectedLang,
-                {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            const pct = Math.round(m.progress * 100);
-                            updateProgress(20 + m.progress * 80, `텍스트 분석 중... ${pct}%`, '영역을 구분하고 문자를 탐지하고 있습니다.');
-                        } else if (m.status === 'loading language traineddata') {
-                            const pct = Math.round(m.progress * 100);
-                            updateProgress(10 + m.progress * 10, langMessage, '브라우저 로컬 저장소에 모델이 다운로드되어 캐싱됩니다.');
-                        } else {
-                            updateProgress(10, `대기 중: ${m.status}...`);
-                        }
-                    }
-                }
-            );
+        const resJson = await response.json();
+        const textResponse = resJson.candidates[0].content.parts[0].text;
+        const parsedRes = JSON.parse(textResponse);
+        const rawItems = parsedRes.menu_items || parsedRes;
 
-            updateProgress(100, '문자 인식 완료!', '메뉴와 가격 데이터를 분석 중입니다.');
+        // Map to parsedMenuItems structure
+        parsedMenuItems = (Array.isArray(rawItems) ? rawItems : []).map(item => ({
+            name: item.menu_name || item.name || '이름 없음',
+            price: item.price ? `${item.price.toLocaleString()}원` : '-',
+            rawPrice: parseInt(item.price, 10) || 0,
+            confidence: 100,
+            bbox: null // Bounding boxes are not available for Gemini API
+        }));
+
+        // Clear overlay canvas
+        const oCtx = overlayCanvas.getContext('2d');
+        oCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+        updateProgress(100, '분석 완료!', '메뉴 정보를 성공적으로 불러왔습니다.');
+
+        setTimeout(() => {
+            progressCard.style.display = 'none';
+            ocrBtn.disabled = false;
+            renderMenuTable();
             
-            parsedMenuItems = parser.parse(result.data);
-            drawBoundingBoxes(parsedMenuItems);
+            resultsCard.classList.add('active');
+            resultsCard.scrollIntoView({ behavior: 'smooth' });
 
-            setTimeout(() => {
-                progressCard.style.display = 'none';
-                ocrBtn.disabled = false;
-                renderMenuTable();
-                
-                resultsCard.classList.add('active');
-                resultsCard.scrollIntoView({ behavior: 'smooth' });
-                
-                if (parsedMenuItems.length > 0) {
-                    showToast(`총 ${parsedMenuItems.length}개의 메뉴를 찾았습니다.`);
-                } else {
-                    showToast('메뉴를 찾지 못했습니다. 필터를 조정하거나 행을 수동으로 추가해보세요.', 'warning');
-                }
-            }, 800);
+            if (parsedMenuItems.length > 0) {
+                showToast(`Vision AI가 총 ${parsedMenuItems.length}개의 메뉴를 완벽하게 추출했습니다.`, 'success');
+            } else {
+                showToast('메뉴 데이터를 식별하지 못했습니다.', 'warning');
+            }
+        }, 800);
 
-        } catch (error) {
-            console.error('OCR Error:', error);
-            updateProgress(0, '오류 발생', error.message);
-            ocrBtn.disabled = false;
-            showToast('문자 추출 중 오류가 발생했습니다.', 'danger');
-        }
+    } catch (e) {
+        console.error('Gemini Vision AI Error: ', e);
+        updateProgress(0, '오류 발생', e.message);
+        ocrBtn.disabled = false;
+        showToast('Vision AI 분석 실패: ' + e.message, 'danger');
     }
-}
-
-// Draw red/purple boxes on the canvas where menus were identified
-function drawBoundingBoxes(items) {
-    const ctx = overlayCanvas.getContext('2d');
-    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-
-    items.forEach((item, index) => {
-        if (!item.bbox) return;
-
-        const box = item.bbox;
-        const w = box.x1 - box.x0;
-        const h = box.y1 - box.y0;
-
-        // Draw outer translucent neon violet border
-        ctx.strokeStyle = 'rgba(139, 92, 246, 0.85)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(box.x0, box.y0, w, h);
-
-        // Filled translucent purple inside
-        ctx.fillStyle = 'rgba(139, 92, 246, 0.15)';
-        ctx.fillRect(box.x0, box.y0, w, h);
-
-        // Draw index number tag
-        ctx.fillStyle = '#8b5cf6';
-        ctx.fillRect(box.x0, box.y0 - 20 >= 0 ? box.y0 - 20 : box.y0, 22, 20);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 12px Inter';
-        ctx.fillText(index + 1, box.x0 + 6, (box.y0 - 20 >= 0 ? box.y0 - 6 : box.y0 + 14));
-    });
 }
 
 // Build table elements from data
@@ -529,9 +411,8 @@ function initTableEvents() {
         
         parsedMenuItems.splice(index, 1);
         
-        // Re-render table and redraw boxes
+        // Re-render table
         renderMenuTable();
-        drawBoundingBoxes(parsedMenuItems);
         showToast('메뉴가 삭제되었습니다.', 'warning');
     });
 
